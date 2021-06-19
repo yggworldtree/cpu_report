@@ -4,13 +4,13 @@ import (
 	"encoding/json"
 
 	hbtp "github.com/mgr9525/HyperByte-Transfer-Protocol"
-	"github.com/yggworldtree/cpu_ui/comm"
+	"github.com/yggworldtree/cpu_report/comm"
 	"github.com/yggworldtree/go-core/messages"
 	"github.com/yggworldtree/go-sdk/ywtree"
 )
 
 func (c *Manager) OnConnect(egn *ywtree.Engine) {
-	go Mgr.StartReg()
+	go Mgr.startReg()
 }
 func (c *Manager) OnDisconnect(egn *ywtree.Engine) {
 
@@ -20,12 +20,15 @@ func (c *Manager) OnMessage(egn *ywtree.Engine, msg *ywtree.MessageTopic) *messa
 	hbtp.Debugf("OnMessage:%s,from:%s", pths, msg.Sender.String())
 	switch pths {
 	case comm.MsgPthCpuMem.String():
-		c.blk.Lock()
-		c.cpuDev = msg.Sender
-		err := json.Unmarshal(msg.Body, &c.box)
-		c.blk.Unlock()
+		box := &comm.MsgBox{}
+		err := json.Unmarshal(msg.Body, &box)
 		if err != nil {
 			hbtp.Debugf("OnMessage:%s json err:%v", pths, err)
+		} else {
+			c.blk.Lock()
+			c.cpuDev = msg.Sender
+			c.blk.Unlock()
+			go c.startWrk(box)
 		}
 	}
 	return nil

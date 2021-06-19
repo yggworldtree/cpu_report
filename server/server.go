@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 
 	_ "github.com/go-sql-driver/mysql"
+	hbtp "github.com/mgr9525/HyperByte-Transfer-Protocol"
 	"github.com/yggworldtree/cpu_report/comm"
 	"github.com/yggworldtree/go-sdk/ywtree"
 	"gopkg.in/yaml.v3"
@@ -17,6 +18,7 @@ var (
 )
 
 func Run() {
+	hbtp.Debug = true
 	bts, err := ioutil.ReadFile("app.yml")
 	if err != nil {
 		println("can not read app.yml.please create")

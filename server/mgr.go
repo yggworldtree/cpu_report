@@ -6,7 +6,7 @@ import (
 	"time"
 
 	hbtp "github.com/mgr9525/HyperByte-Transfer-Protocol"
-	"github.com/yggworldtree/cpu_ui/comm"
+	"github.com/yggworldtree/cpu_report/comm"
 	"github.com/yggworldtree/go-core/bean"
 )
 
@@ -16,8 +16,9 @@ type Manager struct {
 	reging bool
 
 	blk    sync.RWMutex
-	box    comm.MsgBox
 	cpuDev *bean.CliGroupPath
+
+	wrking bool
 }
 
 func NewManager() *Manager {
@@ -26,7 +27,7 @@ func NewManager() *Manager {
 	return c
 }
 
-func (c *Manager) StartReg() {
+func (c *Manager) startReg() {
 	defer func() {
 		if err := recover(); err != nil {
 			hbtp.Debugf("Manager StartReg recover:%v", err)
@@ -49,4 +50,20 @@ func (c *Manager) StartReg() {
 		hbtp.Debugf("SubTopic %s err:%v", comm.MsgPthCpuMem.String(), err)
 		time.Sleep(time.Second)
 	}
+}
+func (c *Manager) startWrk(box *comm.MsgBox) {
+	defer func() {
+		if err := recover(); err != nil {
+			hbtp.Debugf("Manager StartReg recover:%v", err)
+		}
+	}()
+	if c.wrking {
+		return
+	}
+	c.wrking = true
+	defer func() {
+		c.wrking = false
+	}()
+
+	hbtp.Debugf("start update db")
 }
