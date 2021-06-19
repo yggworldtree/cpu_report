@@ -1,0 +1,4 @@
+server:
+  mysql: mysql://user:pass
+ywtree:
+  host: localhost:7000
