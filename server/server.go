@@ -1,33 +1,60 @@
 package server
 
 import (
+	"errors"
 	"io/ioutil"
 
+	_ "github.com/go-sql-driver/mysql"
+	"github.com/yggworldtree/cpu_report/comm"
+	"github.com/yggworldtree/go-sdk/ywtree"
 	"gopkg.in/yaml.v3"
 	"xorm.io/xorm"
 )
 
-type Config struct {
-	Server struct {
-		Mysql string `yaml:"mysql"`
-	}
-	Ywtree struct {
-		Host   string `yaml:"host"`
-		Secret string `yaml:"secret"`
-	} `yaml:"ywtree"`
-}
+var (
+	Mgr    *Manager
+	YwtEgn *ywtree.Engine
+)
 
 func Run() {
-	cfg := &Config{}
 	bts, err := ioutil.ReadFile("app.yml")
 	if err != nil {
 		println("can not read app.yml.please create")
 		return
 	}
-	err = yaml.Unmarshal(bts, cfg)
+	err = yaml.Unmarshal(bts, comm.Cfg)
 	if err != nil {
 		println("can not format app.yml.")
 		return
 	}
-	xorm.NewEngine("mysql")
+	err = InitXorm(comm.Cfg.Server.Mysql, &comm.Db)
+	if err != nil {
+		println("init mysql err:" + err.Error())
+		return
+	}
+	defer comm.Db.Close()
+	Mgr = NewManager()
+	YwtEgn = ywtree.NewEngine(Mgr, &ywtree.Config{
+		Host:   comm.Cfg.Ywtree.Host,
+		Secret: comm.Cfg.Ywtree.Secret,
+		Org:    "mgr",
+		Name:   "cpu-report",
+	})
+	err = YwtEgn.Run()
+	if err != nil {
+		println("ywtree err:" + err.Error())
+		return
+	}
+}
+func InitXorm(ul string, pdb **xorm.Engine) error {
+	if ul == "" {
+		return errors.New("url blank")
+	}
+	db, err := xorm.NewEngine("mysql", ul)
+	if err != nil {
+		return err
+	}
+	*pdb = db
+	// *pdb = gocloud.NewDBHelper(db)
+	return nil
 }
