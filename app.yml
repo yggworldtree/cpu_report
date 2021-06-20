@@ -1,4 +1,4 @@
 server:
-  mysql: mysql://user:pass
+  mysql: mgr:123456@tcp(localhost:3306)/reporter
 ywtree:
   host: localhost:7000
