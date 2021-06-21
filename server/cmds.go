@@ -2,6 +2,7 @@ package server
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	hbtp "github.com/mgr9525/HyperByte-Transfer-Protocol"
@@ -59,6 +60,14 @@ func (cmds) SetWarnParam(c *hbtp.Context, m *struct {
 	c.ResString(hbtp.ResStatusOk, "ok")
 }
 
+func (cmds) GetWarnLen(c *hbtp.Context) {
+	ln, err := comm.Db.Count(&model.ReportWarn{})
+	if err != nil {
+		c.ResString(hbtp.ResStatusErr, "find err:"+err.Error())
+		return
+	}
+	c.ResString(hbtp.ResStatusOk, fmt.Sprintf("%d", ln))
+}
 func (cmds) GetWarns(c *hbtp.Context) {
 	var ls []*model.ReportWarn
 	err := comm.Db.OrderBy("id DESC").Find(&ls)
@@ -69,6 +78,14 @@ func (cmds) GetWarns(c *hbtp.Context) {
 	c.ResJson(hbtp.ResStatusOk, ls)
 }
 
+func (cmds) GetInfoLen(c *hbtp.Context) {
+	ln, err := comm.Db.Count(&model.ReportInfo{})
+	if err != nil {
+		c.ResString(hbtp.ResStatusErr, "find err:"+err.Error())
+		return
+	}
+	c.ResString(hbtp.ResStatusOk, fmt.Sprintf("%d", ln))
+}
 func (cmds) GetInfos(c *hbtp.Context) {
 	var ls []*model.ReportInfo
 	err := comm.Db.OrderBy("id DESC").Find(&ls)
