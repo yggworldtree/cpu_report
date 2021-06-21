@@ -6,6 +6,7 @@ import (
 
 	hbtp "github.com/mgr9525/HyperByte-Transfer-Protocol"
 	"github.com/yggworldtree/cpu_report/comm"
+	"github.com/yggworldtree/cpu_report/model"
 	"github.com/yggworldtree/cpu_report/service"
 )
 
@@ -30,7 +31,7 @@ func (cmds) SetWarnInterval(c *hbtp.Context, m *hbtp.Map) {
 		return
 	}
 	Mgr.warnInterval = time.Duration(val)
-	Mgr.uppartmr.Reset(false)
+	Mgr.clearTmr()
 	c.ResString(hbtp.ResStatusOk, "ok")
 }
 
@@ -54,6 +55,26 @@ func (cmds) SetWarnParam(c *hbtp.Context, m *struct {
 		c.ResString(hbtp.ResStatusErr, "set param err:"+err.Error())
 		return
 	}
-	Mgr.uppartmr.Reset(false)
+	Mgr.clearTmr()
 	c.ResString(hbtp.ResStatusOk, "ok")
+}
+
+func (cmds) GetWarns(c *hbtp.Context) {
+	var ls []*model.ReportWarn
+	err := comm.Db.OrderBy("id DESC").Find(&ls)
+	if err != nil {
+		c.ResString(hbtp.ResStatusErr, "find err:"+err.Error())
+		return
+	}
+	c.ResJson(hbtp.ResStatusOk, ls)
+}
+
+func (cmds) GetInfos(c *hbtp.Context) {
+	var ls []*model.ReportInfo
+	err := comm.Db.OrderBy("id DESC").Find(&ls)
+	if err != nil {
+		c.ResString(hbtp.ResStatusErr, "find err:"+err.Error())
+		return
+	}
+	c.ResJson(hbtp.ResStatusOk, ls)
 }

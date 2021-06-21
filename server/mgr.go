@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -32,28 +33,32 @@ type Manager struct {
 	warnCpuAvg   []comm.ParamWarn
 	warnMemPer   []comm.ParamWarn
 	warnSwapPer  []comm.ParamWarn
+
+	warnTmlk sync.RWMutex
+	warnTmrs map[string]*utils.Timer
 }
 
 func NewManager() *Manager {
 	c := &Manager{
 		tmr:      utils.NewTimer(time.Hour),
 		uppartmr: utils.NewTimer(time.Second * 30),
+		warnTmrs: make(map[string]*utils.Timer),
 	}
 	c.Ctx, c.cncl = context.WithCancel(context.Background())
 	return c
 }
 
 func (c *Manager) init() error {
-	c.warnInterval = time.Minute
+	c.warnInterval = time.Second * 30
 	bts, err := service.GetParam("warn-interval")
 	if err != nil {
-		bts = hbtp.BigIntToByte(int64(c.warnInterval), 8)
+		bts = []byte(fmt.Sprintf("%d", c.warnInterval))
 		err = service.SetParam("warn-interval", bts)
 		if err != nil {
 			return err
 		}
 	} else {
-		n := hbtp.BigByteToInt(bts)
+		n, _ := strconv.ParseInt(string(bts), 10, 64)
 		if n > 0 {
 			hbtp.Debugf("warnInterval:%d", n)
 			c.warnInterval = time.Duration(n)
@@ -103,7 +108,12 @@ func (c *Manager) init() error {
 
 	return nil
 }
-
+func (c *Manager) clearTmr() {
+	c.warnTmlk.Lock()
+	defer c.warnTmlk.Unlock()
+	c.warnTmrs = make(map[string]*utils.Timer)
+	c.uppartmr.Reset(false)
+}
 func (c *Manager) run() {
 	defer func() {
 		if err := recover(); err != nil {
@@ -224,10 +234,17 @@ func (c *Manager) startWrk(box *comm.MsgBox) {
 func (c *Manager) outCpuWarns(val float64, ws []comm.ParamWarn) {
 	gid := utils.NewXid()
 	for i, v := range ws {
-		if v.Tmr == nil {
-			v.Tmr = utils.NewTimer(c.warnInterval)
+		k := fmt.Sprintf("%s:%d", "cpu-avg", i)
+		c.warnTmlk.RLock()
+		tmr := c.warnTmrs[k]
+		c.warnTmlk.RUnlock()
+		if tmr == nil {
+			tmr = utils.NewTimer(c.warnInterval)
+			c.warnTmlk.Lock()
+			c.warnTmrs[k] = tmr
+			c.warnTmlk.Unlock()
 		}
-		if v.WarnVal > 0 && val >= v.WarnVal && v.Tmr.Tick() {
+		if v.WarnVal > 0 && val >= v.WarnVal && tmr.Tick() {
 			c.outWarn(gid, val, v.WarnVal, i+1, v.WarnTips)
 		}
 	}
