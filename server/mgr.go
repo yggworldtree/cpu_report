@@ -55,6 +55,7 @@ func (c *Manager) init() error {
 	} else {
 		n := hbtp.BigByteToInt(bts)
 		if n > 0 {
+			hbtp.Debugf("warnInterval:%d", n)
 			c.warnInterval = time.Duration(n)
 		}
 	}
@@ -89,6 +90,10 @@ func (c *Manager) init() error {
 		}
 	}
 
+	for i, v := range c.warnCpuAvg {
+		hbtp.Debugf("CpuAvg[%d]:%.4f", i, v.WarnVal)
+	}
+
 	go func() {
 		for !hbtp.EndContext(c.Ctx) {
 			c.run()
@@ -106,7 +111,7 @@ func (c *Manager) run() {
 		}
 	}()
 
-	if !c.tmr.Tick() {
+	if c.reging {
 		return
 	}
 
@@ -116,6 +121,10 @@ func (c *Manager) run() {
 	if now.Hour() != 1 || now.Hour() != 2 {
 		return
 	}
+	if !c.tmr.Tick() {
+		return
+	}
+
 	n, err := comm.Db.Where("start_time>=?", lastday.Format(comm.TimeFmts)).
 		Count(&model.ReportInfo{})
 	if err != nil || n > 0 {

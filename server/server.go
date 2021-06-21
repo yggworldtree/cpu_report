@@ -47,6 +47,7 @@ func Run() {
 		Org:    "mgr",
 		Name:   "cpu-report",
 	})
+	YwtEgn.RegGrpcGrpcFun(1, &cmds{})
 	err = YwtEgn.Run()
 	if err != nil {
 		println("ywtree err:" + err.Error())
