@@ -12,4 +12,5 @@ type ReportInfo struct {
 	StartTime  time.Time `xorm:"DATETIME" json:"startTime"`
 	EndTime    time.Time `xorm:"DATETIME" json:"endTime"`
 	Infos      string    `xorm:"LONGTEXT" json:"infos"`
+	WarnLen    int       `xorm:"INT(11)" json:"warnLen"`
 }

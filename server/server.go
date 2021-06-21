@@ -36,6 +36,11 @@ func Run() {
 	}
 	defer comm.Db.Close()
 	Mgr = NewManager()
+	err = Mgr.init()
+	if err != nil {
+		println("init manager err:" + err.Error())
+		return
+	}
 	YwtEgn = ywtree.NewEngine(Mgr, &ywtree.Config{
 		Host:   comm.Cfg.Ywtree.Host,
 		Secret: comm.Cfg.Ywtree.Secret,
