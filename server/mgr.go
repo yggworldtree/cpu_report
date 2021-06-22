@@ -128,9 +128,9 @@ func (c *Manager) run() {
 	now := time.Now()
 	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
 	lastday := time.Date(now.Year(), now.Month(), now.Day()-1, 0, 0, 0, 0, now.Location())
-	if now.Hour() != 1 || now.Hour() != 2 {
+	/* if now.Hour() != 1 && now.Hour() != 2 {
 		return
-	}
+	} */
 	if !c.tmr.Tick() {
 		return
 	}
@@ -145,7 +145,7 @@ func (c *Manager) run() {
 	n, err = comm.Db.Where("create_time>=? and create_time<?",
 		lastday.Format(comm.TimeFmts), today.Format(comm.TimeFmts)).
 		Count(&model.ReportWarn{})
-	if err != nil || n > 0 {
+	if err != nil {
 		hbtp.Debugf("warn count err:%v", err)
 		return
 	}
