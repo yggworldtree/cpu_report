@@ -178,9 +178,7 @@ func (c *Manager) startReg() {
 		c.reging = false
 	}()
 	for !hbtp.EndContext(c.Ctx) {
-		err := YwtEgn.SubTopic([]*bean.TopicInfo{
-			{Path: comm.MsgPthCpuMem.String(), Safed: false},
-		})
+		err := YwtEgn.SubTopic(comm.MsgPthCpuMem)
 		if err == nil {
 			break
 		}
