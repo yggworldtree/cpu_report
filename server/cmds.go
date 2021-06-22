@@ -3,6 +3,7 @@ package server
 import (
 	"errors"
 	"fmt"
+	"strconv"
 	"time"
 
 	hbtp "github.com/mgr9525/HyperByte-Transfer-Protocol"
@@ -61,11 +62,33 @@ func (cmds) SetWarnParam(c *hbtp.Context, m *struct {
 }
 
 func (cmds) GetWarnLen(c *hbtp.Context) {
-	ln, err := comm.Db.Count(&model.ReportWarn{})
+	days := c.Args().Get("day")
+	typs := c.Args().Get("type")
+	lev := c.Args().Get("lev")
+	day, _ := strconv.Atoi(days)
+	ses := comm.Db.NewSession()
+	defer ses.Close()
+	now := time.Now()
+	today := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+	if day == -1 {
+		ses.And("create_time>=?", today.Format(comm.TimeFmts))
+	} else if day > 0 {
+		day1 := today.AddDate(0, 0, -int(day))
+		day2 := today.AddDate(0, 0, -int(day-1))
+		ses.And("create_time>=? and create_time<?", day1.Format(comm.TimeFmts), day2.Format(comm.TimeFmts))
+	}
+	if typs != "" {
+		ses.And("`type`=?", typs)
+	}
+	if lev != "" {
+		ses.And("`lev`=?", lev)
+	}
+	ln, err := ses.Count(&model.ReportWarn{})
 	if err != nil {
 		c.ResString(hbtp.ResStatusErr, "find err:"+err.Error())
 		return
 	}
+	hbtp.Debugf("GetWarnLen day(%d):%d", day, ln)
 	c.ResString(hbtp.ResStatusOk, fmt.Sprintf("%d", ln))
 }
 func (cmds) GetWarns(c *hbtp.Context) {

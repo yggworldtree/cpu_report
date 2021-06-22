@@ -62,6 +62,7 @@ func InitXorm(ul string, pdb **xorm.Engine) error {
 	if err != nil {
 		return err
 	}
+	db.ShowSQL(true)
 	*pdb = db
 	// *pdb = gocloud.NewDBHelper(db)
 	return nil
